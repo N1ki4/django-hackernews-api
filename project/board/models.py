@@ -44,8 +44,10 @@ class Comment(models.Model):
         related_name='comments',
         on_delete=models.CASCADE
     )
-    parent = models.ForeignKey('Comment', related_name='replies',
-        on_delete=models.CASCADE, null=True, default=None)
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE,
+        blank=True, null=True, related_name="children"
+    )
     content = models.TextField()
 
     def __str__(self):

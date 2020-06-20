@@ -1,10 +1,9 @@
+from django.http import Http404
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
-from .models import Post, Comment
-from .permissions import IsAuthorOrReadOnly
+from .models import Post
 from .serializers import (
     PostDetailSerializer,
     PostSerializer,
@@ -31,11 +30,15 @@ class PostList(APIView):
 
 
 class PostDetail(APIView):
-    permission_classes = [IsAuthorOrReadOnly]
+    def get_object(self, pk):
+        try:
+            return Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            raise Http404
 
     def get(self, request, pk):
         """get a single post"""
-        post = Post.objects.get(id=pk)
+        post = self.get_object(pk)
         serializer = PostDetailSerializer(post)
         return Response(serializer.data)
 
@@ -69,23 +72,13 @@ class PostUpvote(APIView):
         return Response({"Success": "Upvote has been added."}, status=status.HTTP_201_CREATED)
 
 
-class Comments(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+class CommentCreate(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def post(self, request):
+    def post(self, request, pk):
+        post = Post.objects.get(id=pk)
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(author=self.request.user)
+            serializer.save(author=self.request.user, post=post)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def get(self, request):
-        comments = Comment.objects.all()
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data)
-
-
-class CommentDeleteUpdate(RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthorOrReadOnly]
-    queryset = Comment.objects.all()
-    serializer_class = CommentSerializer

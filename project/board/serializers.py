@@ -32,7 +32,7 @@ class CommentSerializer(serializers.ModelSerializer):
         list_serializer_class = FilterCommentSerializer
         model = Comment
         fields = ("id", "author", "creation_date", "content", "parent", "children")
-        read_only_fields = ("id", "author", "creation_date", "children")
+        read_only_fields = ("id", "author", "creation_date")
 
 
 class PostSerializer(serializers.ModelSerializer):
