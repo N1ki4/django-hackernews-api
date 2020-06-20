@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from .models import Post, Comment
+from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     PostDetailSerializer,
     PostSerializer,
@@ -29,8 +30,9 @@ class PostList(APIView):
         return Response(serializer.data)
 
 
-# TODO IS AUTHOR OR READONLY
 class PostDetail(APIView):
+    permission_classes = [IsAuthorOrReadOnly]
+
     def get(self, request, pk):
         """get a single post"""
         post = Post.objects.get(id=pk)
@@ -83,7 +85,7 @@ class Comments(APIView):
         return Response(serializer.data)
 
 
-# TODO IS AUTHOR OR READONLY
 class CommentDeleteUpdate(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthorOrReadOnly]
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer

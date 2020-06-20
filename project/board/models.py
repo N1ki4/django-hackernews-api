@@ -14,13 +14,11 @@ class Post(models.Model):
         on_delete=models.SET_NULL,
         null=True
     )
-    title = models.CharField(max_length=100)
     creation_date = models.DateTimeField(auto_now_add=True)
     link = models.URLField()
+    title = models.CharField(max_length=256)
     upvotes = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        related_name='upvoted_posts',
-        editable=False,
         through='Upvote'
     )
 
@@ -29,20 +27,12 @@ class Post(models.Model):
 
 
 class Upvote(models.Model):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-    )
-    post = models.ForeignKey(
-        'Post',
-        on_delete=models.CASCADE
-    )
-
-    def __str__(self):
-        return f"Post: {self.post.title} upvoted by: {self.user}"
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='upvotes', on_delete=models.CASCADE)
 
 
 class Comment(models.Model):
+    creation_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='comments',
@@ -54,15 +44,8 @@ class Comment(models.Model):
         related_name='comments',
         on_delete=models.CASCADE
     )
-    parent = models.ForeignKey(
-        'Comment',
-        related_name='children',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        default=None
-    )
-    creation_date = models.DateTimeField(auto_now_add=True)
+    parent = models.ForeignKey('Comment', related_name='replies',
+        on_delete=models.CASCADE, null=True, default=None)
     content = models.TextField()
 
     def __str__(self):
