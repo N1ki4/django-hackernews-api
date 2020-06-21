@@ -22,27 +22,25 @@ class PostList(APIView):
             properties={
                 "title": openapi.Schema(type=openapi.TYPE_STRING),
                 "link": openapi.Schema(type=openapi.TYPE_STRING),
-            }
+            },
         )
     )
     def post(self, request):
-        '''
+        """
          Add a post.
          parameters = title: string, link: url
          Requires user to be logged in, passes it`s id to an author field.
-        '''
+        """
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(
-                author=self.request.user
-            )
+            serializer.save(author=self.request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-        '''
+        """
         Get all posts. Do not requires to be authenticated.
-        '''
+        """
         posts = Post.objects.all()
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
@@ -52,10 +50,10 @@ class PostDetail(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_object(self, pk):
-        '''
+        """
         Helper function to manage get post or raise 404.
         Takes pk as post id.
-        '''
+        """
         try:
             return Post.objects.get(pk=pk)
         except Post.DoesNotExist:
@@ -79,7 +77,7 @@ class PostDetail(APIView):
             properties={
                 "title": openapi.Schema(type=openapi.TYPE_STRING),
                 "link": openapi.Schema(type=openapi.TYPE_STRING),
-            }
+            },
         )
     )
     def put(self, request, pk):
@@ -103,10 +101,14 @@ class PostUpvote(APIView):
         if request.user in post.upvotes.all():
             post.upvotes.remove(request.user)
             post.save()
-            return Response({"Success": "Upvote has been deleted."}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"Success": "Upvote has been deleted."}, status=status.HTTP_201_CREATED
+            )
         post.upvotes.add(request.user)
         post.save()
-        return Response({"Success": "Upvote has been added."}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"Success": "Upvote has been added."}, status=status.HTTP_201_CREATED
+        )
 
 
 class CommentCreate(APIView):
@@ -118,7 +120,7 @@ class CommentCreate(APIView):
             properties={
                 "content": openapi.Schema(type=openapi.TYPE_STRING),
                 "parent": openapi.Schema(type=openapi.TYPE_STRING),
-            }
+            },
         )
     )
     def post(self, request, pk):

@@ -4,3 +4,7 @@ djangorestframework==3.11.0
 djoser==2.0.3
 djangorestframework-simplejwt==4.4.0
 drf-yasg==1.17.1
+
+flake8==3.8.3
+black==19.10b0
+isort==4.3.21
