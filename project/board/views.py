@@ -1,3 +1,5 @@
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from django.http import Http404
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework import status
@@ -14,7 +16,21 @@ from .serializers import (
 class PostList(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "title": openapi.Schema(type=openapi.TYPE_STRING),
+                "link": openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )
+    )
     def post(self, request):
+        '''
+         Add a post.
+         parameters = title: string, link: url
+         Requires user to be logged in, passes it`s id to an author field.
+        '''
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(
@@ -24,13 +40,22 @@ class PostList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
+        '''
+        Get all posts. Do not requires to be authenticated.
+        '''
         posts = Post.objects.all()
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data)
 
 
 class PostDetail(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get_object(self, pk):
+        '''
+        Helper function to manage get post or raise 404.
+        Takes pk as post id.
+        '''
         try:
             return Post.objects.get(pk=pk)
         except Post.DoesNotExist:
@@ -48,6 +73,15 @@ class PostDetail(APIView):
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "title": openapi.Schema(type=openapi.TYPE_STRING),
+                "link": openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )
+    )
     def put(self, request, pk):
         """update a post"""
         post = Post.objects.get(id=pk)
@@ -62,6 +96,9 @@ class PostUpvote(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
+        """
+        Add upvote to a post, or delete if already upvoted.
+        """
         post = Post.objects.get(id=pk)
         if request.user in post.upvotes.all():
             post.upvotes.remove(request.user)
@@ -75,7 +112,22 @@ class PostUpvote(APIView):
 class CommentCreate(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "content": openapi.Schema(type=openapi.TYPE_STRING),
+                "parent": openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        )
+    )
     def post(self, request, pk):
+        """
+        Add comment to a post.
+        Requires user to be authenticated.
+        Parameters are content of the comment,
+        also you can pass parent (id of the comment) parameter to make a reply to a comment.
+        """
         post = Post.objects.get(id=pk)
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
