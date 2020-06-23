@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from celery.schedules import crontab
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -87,9 +88,7 @@ DATABASES = {
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator", },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
@@ -113,7 +112,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = "/static/"
+STATIC_URL = '/static/'
+STATIC_ROOT = '/static'
 
 AUTH_USER_MODEL = "board.CustomUser"
 
@@ -131,3 +131,13 @@ SIMPLE_JWT = {
 }
 
 SWAGGER_SETTINGS = {"USE_SESSION_AUTH": False}
+
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKEND = "redis://redis:6379"
+
+CELERY_BEAT_SCHEDULE = {
+    'do_some_queries': {
+        'task': 'board.tasks.reset_post_upvotes',
+        'schedule': crontab(hour=6),
+    },
+}
